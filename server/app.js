@@ -17,7 +17,8 @@ import bcrypt from 'bcryptjs';
 import indexRouter from './routes/index';
 import signUpRouter from './routes/signup';
 import loginRouter from './routes/login';
-import ssoRouter from './routes/sso'
+import ssoRouter from './routes/sso';
+import articleRouter from './routes/articles';
 
 var app = express();
 
@@ -46,6 +47,7 @@ const loginRouterHandler = loginRouter(passport);
 app.use('/login', loginRouterHandler);
 const ssoRouterHandler = ssoRouter(passport);
 app.use('/sso', passport.authenticate('jwt', { session: false }), ssoRouterHandler);
+app.use('/article', articleRouter);
 
 const nameField = 'userName';
 const pwdField = 'password';
