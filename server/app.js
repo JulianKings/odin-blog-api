@@ -19,6 +19,7 @@ import signUpRouter from './routes/signup';
 import loginRouter from './routes/login';
 import ssoRouter from './routes/sso';
 import articleRouter from './routes/articles';
+import settingsRouter from './routes/settings';
 
 var app = express();
 
@@ -48,6 +49,7 @@ app.use('/login', loginRouterHandler);
 const ssoRouterHandler = ssoRouter(passport);
 app.use('/sso', passport.authenticate('jwt', { session: false }), ssoRouterHandler);
 app.use('/article', articleRouter);
+app.use('/settings', settingsRouter);
 
 const nameField = 'userName';
 const pwdField = 'password';
