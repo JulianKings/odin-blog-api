@@ -6,5 +6,6 @@ export default function(passport) {
 
     const controller = ssoController(passport);
     router.get('/', controller.sso_check);
+    router.post('/comment', controller.sso_post_comment);
     return router;
 }

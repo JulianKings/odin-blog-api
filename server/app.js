@@ -1,4 +1,5 @@
 import express from 'express';
+import createError from 'http-errors';
 import cookieParser from 'cookie-parser';
 import logger from 'morgan';
 import 'dotenv/config'
@@ -20,6 +21,7 @@ import loginRouter from './routes/login';
 import ssoRouter from './routes/sso';
 import articleRouter from './routes/articles';
 import settingsRouter from './routes/settings';
+import commentsRouter from './routes/comments'
 
 var app = express();
 
@@ -50,6 +52,7 @@ const ssoRouterHandler = ssoRouter(passport);
 app.use('/sso', passport.authenticate('jwt', { session: false }), ssoRouterHandler);
 app.use('/article', articleRouter);
 app.use('/settings', settingsRouter);
+app.use('/comment', commentsRouter);
 
 const nameField = 'userName';
 const pwdField = 'password';
