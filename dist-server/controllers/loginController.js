@@ -79,7 +79,8 @@ function _default(passport) {
                                 case 2:
                                   body = {
                                     _id: user._id,
-                                    username: user.username
+                                    username: user.username,
+                                    role: user.membership_role
                                   };
                                   token = _jsonwebtoken["default"].sign({
                                     user: body
