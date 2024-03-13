@@ -20,7 +20,9 @@ var articles_all = exports.articles_all = (0, _expressAsyncHandler["default"])( 
       while (1) switch (_context.prev = _context.next) {
         case 0:
           _context.next = 2;
-          return _article["default"].find().sort({
+          return _article["default"].find({
+            status: "active"
+          }).sort({
             timestamp: -1
           }).populate("author").populate("category").exec();
         case 2:
@@ -47,7 +49,9 @@ var articles_all_latest = exports.articles_all_latest = (0, _expressAsyncHandler
       while (1) switch (_context2.prev = _context2.next) {
         case 0:
           _context2.next = 2;
-          return _article["default"].find().sort({
+          return _article["default"].find({
+            status: "active"
+          }).sort({
             timestamp: -1
           }).populate("author").populate("category").limit(6).exec();
         case 2:
@@ -74,7 +78,9 @@ var articles_all_popular = exports.articles_all_popular = (0, _expressAsyncHandl
       while (1) switch (_context3.prev = _context3.next) {
         case 0:
           _context3.next = 2;
-          return _article["default"].find().sort({
+          return _article["default"].find({
+            status: "active"
+          }).sort({
             likes: -1
           }).populate("author").populate("category").limit(5).exec();
         case 2:

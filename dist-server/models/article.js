@@ -21,6 +21,10 @@ var articleSchema = new Schema({
     type: String,
     required: true
   },
+  status: {
+    type: String,
+    required: true
+  },
   category: {
     type: Schema.Types.ObjectId,
     ref: "category",

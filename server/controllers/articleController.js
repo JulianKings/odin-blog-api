@@ -5,7 +5,7 @@ import expressAsyncHandler from "express-async-handler";
 import commentModel from "../models/comment";
 
 const articles_all = expressAsyncHandler(async (req, res, next) => {
-    const allArticles = await articleModel.find().sort({ timestamp: -1 })
+    const allArticles = await articleModel.find({ status: "active"}).sort({ timestamp: -1 })
         .populate("author").populate("category").exec();
 
     const responseObject = {
@@ -16,7 +16,7 @@ const articles_all = expressAsyncHandler(async (req, res, next) => {
 });
 
 const articles_all_latest = expressAsyncHandler(async (req, res, next) => {
-    const allArticles = await articleModel.find().sort({ timestamp: -1 })
+    const allArticles = await articleModel.find({ status: "active"}).sort({ timestamp: -1 })
         .populate("author").populate("category").limit(6).exec();
 
     const responseObject = {
@@ -27,7 +27,7 @@ const articles_all_latest = expressAsyncHandler(async (req, res, next) => {
 });
 
 const articles_all_popular = expressAsyncHandler(async (req, res, next) => {
-    const allArticles = await articleModel.find().sort({ likes: -1 })
+    const allArticles = await articleModel.find({ status: "active"}).sort({ likes: -1 })
         .populate("author").populate("category").limit(5).exec();
 
     const responseObject = {

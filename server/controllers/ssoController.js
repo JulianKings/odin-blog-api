@@ -5,6 +5,7 @@ import { body, validationResult } from 'express-validator';
 import articleLikeModel from "../models/article_like";
 import articleModel from "../models/article";
 import articleSavedModel from "../models/article_saved";
+import userModel from "../models/user";
 
 export default function(passport) {
     return {
@@ -88,6 +89,7 @@ export default function(passport) {
                         title: likedArticle.title,
                         description: likedArticle.description,
                         message: likedArticle.message,
+                        status: likedArticle.status,
                         category: likedArticle.category,
                         author: likedArticle.author,
                         timestamp: likedArticle.timestamp,
@@ -191,6 +193,32 @@ export default function(passport) {
                 articles: allArticles
             }
             return res.json(responseObject);
-        })
+        }),
+
+        housekeeping_get_dashboard: expressAsyncHandler(async (req, res, next) => {
+            const [allArticles, allComments, articleCount, authorCount] = await Promise.all([
+                articleModel.find().sort({ timestamp: -1 }).limit(6)
+                .populate("author").exec(),
+                commentModel.find().sort({ timestamp: -1 }).limit(6)
+                .populate("author").exec(),
+                articleModel.countDocuments({}).exec(),
+                userModel.countDocuments({
+                    $or: [
+                        {membership_role: 'administrator'},
+                        {membership_role: 'author'}
+                    ]
+                }).exec()
+            ]);
+        
+            const responseObject = {
+                responseStatus: 'validRequest',
+                article_count: articleCount,
+                author_count: authorCount,
+                articles: allArticles,
+                comments: allComments
+            }
+            return res.json(responseObject);
+        }),
+
     }
 }

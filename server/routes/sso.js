@@ -12,5 +12,6 @@ export default function(passport) {
     router.get('/check_saved_article/:id', controller.sso_check_saved_article);
     router.get('/do_save_article/:id', controller.sso_do_save_article);
     router.get('/get_saved_articles', controller.get_saved_articles);
+    router.get('/admin/dashboard', controller.housekeeping_get_dashboard);
     return router;
 }
