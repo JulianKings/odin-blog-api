@@ -12,6 +12,9 @@ var _article_like = _interopRequireDefault(require("../models/article_like"));
 var _article = _interopRequireDefault(require("../models/article"));
 var _article_saved = _interopRequireDefault(require("../models/article_saved"));
 var _user = _interopRequireDefault(require("../models/user"));
+var _user_subscription = _interopRequireDefault(require("../models/user_subscription"));
+var _category = _interopRequireDefault(require("../models/category"));
+var _settings = _interopRequireDefault(require("../models/settings"));
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { "default": obj }; }
 function _slicedToArray(arr, i) { return _arrayWithHoles(arr) || _iterableToArrayLimit(arr, i) || _unsupportedIterableToArray(arr, i) || _nonIterableRest(); }
 function _nonIterableRest() { throw new TypeError("Invalid attempt to destructure non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); }
@@ -92,7 +95,7 @@ function _default(passport) {
         return _regeneratorRuntime().wrap(function _callee3$(_context3) {
           while (1) switch (_context3.prev = _context3.next) {
             case 0:
-              if (!(req.params.id < 24)) {
+              if (!(req.params.id.length < 24)) {
                 _context3.next = 3;
                 break;
               }
@@ -138,7 +141,7 @@ function _default(passport) {
         return _regeneratorRuntime().wrap(function _callee4$(_context4) {
           while (1) switch (_context4.prev = _context4.next) {
             case 0:
-              if (!(req.params.id < 24)) {
+              if (!(req.params.id.length < 24)) {
                 _context4.next = 3;
                 break;
               }
@@ -214,7 +217,7 @@ function _default(passport) {
         return _regeneratorRuntime().wrap(function _callee5$(_context5) {
           while (1) switch (_context5.prev = _context5.next) {
             case 0:
-              if (!(req.params.id < 24)) {
+              if (!(req.params.id.length < 24)) {
                 _context5.next = 3;
                 break;
               }
@@ -260,7 +263,7 @@ function _default(passport) {
         return _regeneratorRuntime().wrap(function _callee6$(_context6) {
           while (1) switch (_context6.prev = _context6.next) {
             case 0:
-              if (!(req.params.id < 24)) {
+              if (!(req.params.id.length < 24)) {
                 _context6.next = 3;
                 break;
               }
@@ -350,7 +353,7 @@ function _default(passport) {
     }()),
     housekeeping_get_dashboard: (0, _expressAsyncHandler["default"])( /*#__PURE__*/function () {
       var _ref8 = _asyncToGenerator( /*#__PURE__*/_regeneratorRuntime().mark(function _callee8(req, res, next) {
-        var _yield$Promise$all, _yield$Promise$all2, allArticles, allComments, articleCount, authorCount, responseObject;
+        var _yield$Promise$all, _yield$Promise$all2, allArticles, allComments, subscriptionCount, articleCount, authorCount, responseObject;
         return _regeneratorRuntime().wrap(function _callee8$(_context8) {
           while (1) switch (_context8.prev = _context8.next) {
             case 0:
@@ -359,7 +362,7 @@ function _default(passport) {
                 timestamp: -1
               }).limit(6).populate("author").exec(), _comment["default"].find().sort({
                 timestamp: -1
-              }).limit(6).populate("author").exec(), _article["default"].countDocuments({}).exec(), _user["default"].countDocuments({
+              }).limit(6).populate("author").exec(), _user_subscription["default"].countDocuments({}).exec(), _article["default"].countDocuments({}).exec(), _user["default"].countDocuments({
                 $or: [{
                   membership_role: 'administrator'
                 }, {
@@ -368,20 +371,22 @@ function _default(passport) {
               }).exec()]);
             case 2:
               _yield$Promise$all = _context8.sent;
-              _yield$Promise$all2 = _slicedToArray(_yield$Promise$all, 4);
+              _yield$Promise$all2 = _slicedToArray(_yield$Promise$all, 5);
               allArticles = _yield$Promise$all2[0];
               allComments = _yield$Promise$all2[1];
-              articleCount = _yield$Promise$all2[2];
-              authorCount = _yield$Promise$all2[3];
+              subscriptionCount = _yield$Promise$all2[2];
+              articleCount = _yield$Promise$all2[3];
+              authorCount = _yield$Promise$all2[4];
               responseObject = {
                 responseStatus: 'validRequest',
                 article_count: articleCount,
                 author_count: authorCount,
+                subscription_count: subscriptionCount,
                 articles: allArticles,
                 comments: allComments
               };
               return _context8.abrupt("return", res.json(responseObject));
-            case 10:
+            case 11:
             case "end":
               return _context8.stop();
           }
@@ -389,6 +394,450 @@ function _default(passport) {
       }));
       return function (_x22, _x23, _x24) {
         return _ref8.apply(this, arguments);
+      };
+    }()),
+    housekeeping_get_categories: (0, _expressAsyncHandler["default"])( /*#__PURE__*/function () {
+      var _ref9 = _asyncToGenerator( /*#__PURE__*/_regeneratorRuntime().mark(function _callee9(req, res, next) {
+        var categories, responseObject;
+        return _regeneratorRuntime().wrap(function _callee9$(_context9) {
+          while (1) switch (_context9.prev = _context9.next) {
+            case 0:
+              _context9.next = 2;
+              return _category["default"].find({}).exec();
+            case 2:
+              categories = _context9.sent;
+              responseObject = {
+                responseStatus: 'validRequest',
+                categories: categories
+              };
+              return _context9.abrupt("return", res.json(responseObject));
+            case 5:
+            case "end":
+              return _context9.stop();
+          }
+        }, _callee9);
+      }));
+      return function (_x25, _x26, _x27) {
+        return _ref9.apply(this, arguments);
+      };
+    }()),
+    housekeeping_post_add_category: [
+    // Validate and sanitize fields.
+    (0, _expressValidator.body)("category", "Category name must not be empty.").trim().isLength({
+      min: 1
+    }).escape().custom( /*#__PURE__*/function () {
+      var _ref10 = _asyncToGenerator( /*#__PURE__*/_regeneratorRuntime().mark(function _callee10(value) {
+        var category;
+        return _regeneratorRuntime().wrap(function _callee10$(_context10) {
+          while (1) switch (_context10.prev = _context10.next) {
+            case 0:
+              _context10.next = 2;
+              return _category["default"].findOne({
+                name: value
+              });
+            case 2:
+              category = _context10.sent;
+              if (!category) {
+                _context10.next = 5;
+                break;
+              }
+              throw new Error('This category already exists.');
+            case 5:
+            case "end":
+              return _context10.stop();
+          }
+        }, _callee10);
+      }));
+      return function (_x28) {
+        return _ref10.apply(this, arguments);
+      };
+    }()), (0, _expressAsyncHandler["default"])( /*#__PURE__*/function () {
+      var _ref11 = _asyncToGenerator( /*#__PURE__*/_regeneratorRuntime().mark(function _callee11(req, res, next) {
+        var errors, newCategory, responseObject, _responseObject9;
+        return _regeneratorRuntime().wrap(function _callee11$(_context11) {
+          while (1) switch (_context11.prev = _context11.next) {
+            case 0:
+              errors = (0, _expressValidator.validationResult)(req);
+              if (!errors.isEmpty()) {
+                _context11.next = 10;
+                break;
+              }
+              if (!(req.user.role === 'administrator')) {
+                _context11.next = 8;
+                break;
+              }
+              newCategory = new _category["default"]({
+                name: req.body.category
+              });
+              _context11.next = 6;
+              return newCategory.save();
+            case 6:
+              responseObject = {
+                responseStatus: 'categoryAdded'
+              };
+              res.json(responseObject);
+            case 8:
+              _context11.next = 12;
+              break;
+            case 10:
+              // send response with errors
+              _responseObject9 = {
+                responseStatus: 'categoryError',
+                errors: errors.array()
+              };
+              return _context11.abrupt("return", res.json(_responseObject9));
+            case 12:
+            case "end":
+              return _context11.stop();
+          }
+        }, _callee11);
+      }));
+      return function (_x29, _x30, _x31) {
+        return _ref11.apply(this, arguments);
+      };
+    }())],
+    housekeeping_delete_category: (0, _expressAsyncHandler["default"])( /*#__PURE__*/function () {
+      var _ref12 = _asyncToGenerator( /*#__PURE__*/_regeneratorRuntime().mark(function _callee12(req, res, next) {
+        var responseObject, _responseObject10, articlesByCategory, _responseObject11, _responseObject12;
+        return _regeneratorRuntime().wrap(function _callee12$(_context12) {
+          while (1) switch (_context12.prev = _context12.next) {
+            case 0:
+              if (!(req.body.category_id.length < 24)) {
+                _context12.next = 3;
+                break;
+              }
+              // No results
+              responseObject = {
+                responseStatus: 'invalidCategoryId'
+              };
+              return _context12.abrupt("return", res.json(responseObject));
+            case 3:
+              if (!(req.user.role !== 'administrator')) {
+                _context12.next = 6;
+                break;
+              }
+              _responseObject10 = {
+                responseStatus: 'notEnoughPermissions'
+              };
+              return _context12.abrupt("return", res.json(_responseObject10));
+            case 6:
+              _context12.next = 8;
+              return _article["default"].find({
+                category: req.body.category_id
+              }).exec();
+            case 8:
+              articlesByCategory = _context12.sent;
+              if (!(articlesByCategory.length > 0)) {
+                _context12.next = 14;
+                break;
+              }
+              _responseObject11 = {
+                responseStatus: 'confirmDeletion'
+              };
+              return _context12.abrupt("return", res.json(_responseObject11));
+            case 14:
+              _context12.next = 16;
+              return _category["default"].findByIdAndDelete(req.body.category_id);
+            case 16:
+              _responseObject12 = {
+                responseStatus: 'categoryDeleted'
+              };
+              return _context12.abrupt("return", res.json(_responseObject12));
+            case 18:
+            case "end":
+              return _context12.stop();
+          }
+        }, _callee12);
+      }));
+      return function (_x32, _x33, _x34) {
+        return _ref12.apply(this, arguments);
+      };
+    }()),
+    housekeeping_get_category: (0, _expressAsyncHandler["default"])( /*#__PURE__*/function () {
+      var _ref13 = _asyncToGenerator( /*#__PURE__*/_regeneratorRuntime().mark(function _callee13(req, res, next) {
+        var responseObject, _responseObject13, categoryResult, _responseObject14, _responseObject15;
+        return _regeneratorRuntime().wrap(function _callee13$(_context13) {
+          while (1) switch (_context13.prev = _context13.next) {
+            case 0:
+              if (!(req.params.id.length < 24)) {
+                _context13.next = 3;
+                break;
+              }
+              // No results
+              responseObject = {
+                responseStatus: 'invalidCategoryId'
+              };
+              return _context13.abrupt("return", res.json(responseObject));
+            case 3:
+              if (!(req.user.role !== 'administrator')) {
+                _context13.next = 6;
+                break;
+              }
+              _responseObject13 = {
+                responseStatus: 'notEnoughPermissions'
+              };
+              return _context13.abrupt("return", res.json(_responseObject13));
+            case 6:
+              _context13.next = 8;
+              return _category["default"].findOne({
+                _id: req.params.id
+              }).exec();
+            case 8:
+              categoryResult = _context13.sent;
+              if (categoryResult) {
+                _context13.next = 14;
+                break;
+              }
+              _responseObject14 = {
+                responseStatus: 'unknownCategory'
+              };
+              return _context13.abrupt("return", res.json(_responseObject14));
+            case 14:
+              _responseObject15 = {
+                responseStatus: 'categoryFound',
+                category: categoryResult
+              };
+              return _context13.abrupt("return", res.json(_responseObject15));
+            case 16:
+            case "end":
+              return _context13.stop();
+          }
+        }, _callee13);
+      }));
+      return function (_x35, _x36, _x37) {
+        return _ref13.apply(this, arguments);
+      };
+    }()),
+    housekeeping_put_edit_category: [
+    // Validate and sanitize fields.
+    (0, _expressValidator.body)("category", "Category name must not be empty.").trim().isLength({
+      min: 1
+    }).escape().custom( /*#__PURE__*/function () {
+      var _ref14 = _asyncToGenerator( /*#__PURE__*/_regeneratorRuntime().mark(function _callee14(value) {
+        var category;
+        return _regeneratorRuntime().wrap(function _callee14$(_context14) {
+          while (1) switch (_context14.prev = _context14.next) {
+            case 0:
+              _context14.next = 2;
+              return _category["default"].findOne({
+                name: value
+              });
+            case 2:
+              category = _context14.sent;
+              if (!category) {
+                _context14.next = 5;
+                break;
+              }
+              throw new Error('This category already exists.');
+            case 5:
+            case "end":
+              return _context14.stop();
+          }
+        }, _callee14);
+      }));
+      return function (_x38) {
+        return _ref14.apply(this, arguments);
+      };
+    }()), (0, _expressAsyncHandler["default"])( /*#__PURE__*/function () {
+      var _ref15 = _asyncToGenerator( /*#__PURE__*/_regeneratorRuntime().mark(function _callee15(req, res, next) {
+        var errors, updatedCategory, responseObject, _responseObject16;
+        return _regeneratorRuntime().wrap(function _callee15$(_context15) {
+          while (1) switch (_context15.prev = _context15.next) {
+            case 0:
+              errors = (0, _expressValidator.validationResult)(req);
+              if (!errors.isEmpty()) {
+                _context15.next = 10;
+                break;
+              }
+              if (!(req.user.role === 'administrator')) {
+                _context15.next = 8;
+                break;
+              }
+              updatedCategory = new _category["default"]({
+                name: req.body.category,
+                _id: req.body.category_id
+              });
+              _context15.next = 6;
+              return _category["default"].findByIdAndUpdate(req.body.category_id, updatedCategory, {});
+            case 6:
+              responseObject = {
+                responseStatus: 'categoryUpdated'
+              };
+              res.json(responseObject);
+            case 8:
+              _context15.next = 12;
+              break;
+            case 10:
+              // send response with errors
+              _responseObject16 = {
+                responseStatus: 'categoryError',
+                errors: errors.array()
+              };
+              return _context15.abrupt("return", res.json(_responseObject16));
+            case 12:
+            case "end":
+              return _context15.stop();
+          }
+        }, _callee15);
+      }));
+      return function (_x39, _x40, _x41) {
+        return _ref15.apply(this, arguments);
+      };
+    }())],
+    housekeeping_get_category_deletion: (0, _expressAsyncHandler["default"])( /*#__PURE__*/function () {
+      var _ref16 = _asyncToGenerator( /*#__PURE__*/_regeneratorRuntime().mark(function _callee16(req, res, next) {
+        var responseObject, _responseObject17, categoryResult, _responseObject18, articlesByCategory, _responseObject19;
+        return _regeneratorRuntime().wrap(function _callee16$(_context16) {
+          while (1) switch (_context16.prev = _context16.next) {
+            case 0:
+              if (!(req.params.id.length < 24)) {
+                _context16.next = 3;
+                break;
+              }
+              // No results
+              responseObject = {
+                responseStatus: 'invalidCategoryId'
+              };
+              return _context16.abrupt("return", res.json(responseObject));
+            case 3:
+              if (!(req.user.role !== 'administrator')) {
+                _context16.next = 6;
+                break;
+              }
+              _responseObject17 = {
+                responseStatus: 'notEnoughPermissions'
+              };
+              return _context16.abrupt("return", res.json(_responseObject17));
+            case 6:
+              _context16.next = 8;
+              return _category["default"].findOne({
+                _id: req.params.id
+              }).exec();
+            case 8:
+              categoryResult = _context16.sent;
+              if (categoryResult) {
+                _context16.next = 14;
+                break;
+              }
+              _responseObject18 = {
+                responseStatus: 'unknownCategory'
+              };
+              return _context16.abrupt("return", res.json(_responseObject18));
+            case 14:
+              _context16.next = 16;
+              return _article["default"].find({
+                category: req.params.id
+              }).sort({
+                timestamp: -1
+              }).exec();
+            case 16:
+              articlesByCategory = _context16.sent;
+              _responseObject19 = {
+                responseStatus: 'categoryFound',
+                category: categoryResult,
+                articles: articlesByCategory
+              };
+              return _context16.abrupt("return", res.json(_responseObject19));
+            case 19:
+            case "end":
+              return _context16.stop();
+          }
+        }, _callee16);
+      }));
+      return function (_x42, _x43, _x44) {
+        return _ref16.apply(this, arguments);
+      };
+    }()),
+    housekeeping_force_delete_category: (0, _expressAsyncHandler["default"])( /*#__PURE__*/function () {
+      var _ref17 = _asyncToGenerator( /*#__PURE__*/_regeneratorRuntime().mark(function _callee17(req, res, next) {
+        var responseObject, _responseObject20, articlesByCategory, featuredArticleArray, articleArray, featuredArticle, _responseObject21, _responseObject22, _responseObject23;
+        return _regeneratorRuntime().wrap(function _callee17$(_context17) {
+          while (1) switch (_context17.prev = _context17.next) {
+            case 0:
+              if (!(req.body.category_id.length < 24)) {
+                _context17.next = 3;
+                break;
+              }
+              // No results
+              responseObject = {
+                responseStatus: 'invalidCategoryId'
+              };
+              return _context17.abrupt("return", res.json(responseObject));
+            case 3:
+              if (!(req.user.role !== 'administrator')) {
+                _context17.next = 6;
+                break;
+              }
+              _responseObject20 = {
+                responseStatus: 'notEnoughPermissions',
+                error: "You don't have enough permissions for this action."
+              };
+              return _context17.abrupt("return", res.json(_responseObject20));
+            case 6:
+              _context17.next = 8;
+              return _article["default"].find({
+                category: req.body.category_id
+              }).exec();
+            case 8:
+              articlesByCategory = _context17.sent;
+              if (!(articlesByCategory.length > 0)) {
+                _context17.next = 27;
+                break;
+              }
+              featuredArticleArray = [];
+              articleArray = [];
+              articlesByCategory.forEach(function (article) {
+                articleArray.push(article._id);
+                featuredArticleArray.push({
+                  featured_article: article._id
+                });
+              });
+              featuredArticle = _settings["default"].findOne({
+                $or: featuredArticleArray
+              }).exec();
+              if (featuredArticle) {
+                _context17.next = 23;
+                break;
+              }
+              _context17.next = 17;
+              return _article["default"].deleteMany({
+                _id: {
+                  $in: articleArray
+                }
+              });
+            case 17:
+              _context17.next = 19;
+              return _category["default"].findByIdAndDelete(req.body.category_id);
+            case 19:
+              _responseObject21 = {
+                responseStatus: 'categoryDeleted'
+              };
+              return _context17.abrupt("return", res.json(_responseObject21));
+            case 23:
+              _responseObject22 = {
+                responseStatus: 'categoryHasFeaturedArticle',
+                error: "This category has a featured article, therefore it can't be deleted."
+              };
+              return _context17.abrupt("return", res.json(_responseObject22));
+            case 25:
+              _context17.next = 31;
+              break;
+            case 27:
+              _context17.next = 29;
+              return _category["default"].findByIdAndDelete(req.body.category_id);
+            case 29:
+              _responseObject23 = {
+                responseStatus: 'categoryDeleted'
+              };
+              return _context17.abrupt("return", res.json(_responseObject23));
+            case 31:
+            case "end":
+              return _context17.stop();
+          }
+        }, _callee17);
+      }));
+      return function (_x45, _x46, _x47) {
+        return _ref17.apply(this, arguments);
       };
     }())
   };
