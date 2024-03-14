@@ -839,6 +839,66 @@ function _default(passport) {
       return function (_x45, _x46, _x47) {
         return _ref17.apply(this, arguments);
       };
+    }()),
+    housekeeping_get_settings: (0, _expressAsyncHandler["default"])( /*#__PURE__*/function () {
+      var _ref18 = _asyncToGenerator( /*#__PURE__*/_regeneratorRuntime().mark(function _callee18(req, res, next) {
+        var _yield$Promise$all3, _yield$Promise$all4, articles, settings, responseObject;
+        return _regeneratorRuntime().wrap(function _callee18$(_context18) {
+          while (1) switch (_context18.prev = _context18.next) {
+            case 0:
+              _context18.next = 2;
+              return Promise.all([_article["default"].find({}).exec(), _settings["default"].findOne({})]);
+            case 2:
+              _yield$Promise$all3 = _context18.sent;
+              _yield$Promise$all4 = _slicedToArray(_yield$Promise$all3, 2);
+              articles = _yield$Promise$all4[0];
+              settings = _yield$Promise$all4[1];
+              responseObject = {
+                responseStatus: 'validRequest',
+                articles: articles,
+                settings: settings
+              };
+              return _context18.abrupt("return", res.json(responseObject));
+            case 8:
+            case "end":
+              return _context18.stop();
+          }
+        }, _callee18);
+      }));
+      return function (_x48, _x49, _x50) {
+        return _ref18.apply(this, arguments);
+      };
+    }()),
+    housekeeping_put_edit_settings: (0, _expressAsyncHandler["default"])( /*#__PURE__*/function () {
+      var _ref19 = _asyncToGenerator( /*#__PURE__*/_regeneratorRuntime().mark(function _callee19(req, res, next) {
+        var updatedSetting, responseObject;
+        return _regeneratorRuntime().wrap(function _callee19$(_context19) {
+          while (1) switch (_context19.prev = _context19.next) {
+            case 0:
+              if (!(req.user.role === 'administrator')) {
+                _context19.next = 6;
+                break;
+              }
+              updatedSetting = new _category["default"]({
+                featured_article: req.body.featured_article,
+                _id: req.body.settings_id
+              });
+              _context19.next = 4;
+              return _settings["default"].findByIdAndUpdate(req.body.settings_id, updatedSetting, {});
+            case 4:
+              responseObject = {
+                responseStatus: 'settingsUpdated'
+              };
+              res.json(responseObject);
+            case 6:
+            case "end":
+              return _context19.stop();
+          }
+        }, _callee19);
+      }));
+      return function (_x51, _x52, _x53) {
+        return _ref19.apply(this, arguments);
+      };
     }())
   };
 }

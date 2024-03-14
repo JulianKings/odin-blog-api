@@ -20,5 +20,7 @@ export default function(passport) {
     router.get('/admin/category/delete/find/:id', controller.housekeeping_get_category_deletion);
     router.put('/admin/category/edit', controller.housekeeping_put_edit_category);
     router.delete('/admin/category/force_delete', controller.housekeeping_force_delete_category);
+    router.get('/admin/settings', controller.housekeeping_get_settings);
+    router.put('/admin/settings/edit', controller.housekeeping_put_edit_settings);
     return router;
 }

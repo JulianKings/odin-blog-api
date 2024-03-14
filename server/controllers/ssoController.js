@@ -470,5 +470,31 @@ export default function(passport) {
                 return res.json(responseObject);
             }
         }),
+        housekeeping_get_settings: expressAsyncHandler(async (req, res, next) => {
+            const [articles, settings] = await Promise.all([articleModel.find({}).exec(),
+                settingsModel.findOne({})]);
+        
+            const responseObject = {
+                responseStatus: 'validRequest',
+                articles: articles,
+                settings: settings
+            }
+            return res.json(responseObject);
+        }),
+        housekeeping_put_edit_settings: expressAsyncHandler(async (req, res, next) => {
+            if(req.user.role === 'administrator')
+            {
+                const updatedSetting = new categoryModel({
+                    featured_article: req.body.featured_article,
+                    _id: req.body.settings_id
+                })
+
+                await settingsModel.findByIdAndUpdate(req.body.settings_id, updatedSetting, {});
+                const responseObject = {
+                    responseStatus: 'settingsUpdated'
+                }
+                res.json(responseObject);
+            }
+        })
     }
 }
