@@ -899,6 +899,180 @@ function _default(passport) {
       return function (_x51, _x52, _x53) {
         return _ref19.apply(this, arguments);
       };
+    }()),
+    housekeeping_get_articles: (0, _expressAsyncHandler["default"])( /*#__PURE__*/function () {
+      var _ref20 = _asyncToGenerator( /*#__PURE__*/_regeneratorRuntime().mark(function _callee20(req, res, next) {
+        var articles, responseObject;
+        return _regeneratorRuntime().wrap(function _callee20$(_context20) {
+          while (1) switch (_context20.prev = _context20.next) {
+            case 0:
+              _context20.next = 2;
+              return _article["default"].find({}).populate('author').sort({
+                timestamp: -1
+              }).exec();
+            case 2:
+              articles = _context20.sent;
+              responseObject = {
+                responseStatus: 'validRequest',
+                articles: articles
+              };
+              return _context20.abrupt("return", res.json(responseObject));
+            case 5:
+            case "end":
+              return _context20.stop();
+          }
+        }, _callee20);
+      }));
+      return function (_x54, _x55, _x56) {
+        return _ref20.apply(this, arguments);
+      };
+    }()),
+    housekeeping_get_articles_categories: (0, _expressAsyncHandler["default"])( /*#__PURE__*/function () {
+      var _ref21 = _asyncToGenerator( /*#__PURE__*/_regeneratorRuntime().mark(function _callee21(req, res, next) {
+        var categories, responseObject;
+        return _regeneratorRuntime().wrap(function _callee21$(_context21) {
+          while (1) switch (_context21.prev = _context21.next) {
+            case 0:
+              _context21.next = 2;
+              return _category["default"].find({}).exec();
+            case 2:
+              categories = _context21.sent;
+              responseObject = {
+                responseStatus: 'validRequest',
+                categories: categories
+              };
+              return _context21.abrupt("return", res.json(responseObject));
+            case 5:
+            case "end":
+              return _context21.stop();
+          }
+        }, _callee21);
+      }));
+      return function (_x57, _x58, _x59) {
+        return _ref21.apply(this, arguments);
+      };
+    }()),
+    housekeeping_post_add_article: [
+    // Validate and sanitize fields.
+    (0, _expressValidator.body)("article_title", "Article title must not be empty.").trim().isLength({
+      min: 1
+    }).escape(), (0, _expressValidator.body)("article_description", "Article description must not be empty.").trim().isLength({
+      min: 1
+    }).escape(), (0, _expressValidator.body)("article_content", "Article content must not be empty.").trim().isLength({
+      min: 1
+    }).escape(), (0, _expressValidator.body)("article_category", "Article category must not be empty.").trim().isLength({
+      min: 1
+    }).escape(), (0, _expressAsyncHandler["default"])( /*#__PURE__*/function () {
+      var _ref22 = _asyncToGenerator( /*#__PURE__*/_regeneratorRuntime().mark(function _callee22(req, res, next) {
+        var errors, imageUrl, newArticle, responseObject, _responseObject24;
+        return _regeneratorRuntime().wrap(function _callee22$(_context22) {
+          while (1) switch (_context22.prev = _context22.next) {
+            case 0:
+              errors = (0, _expressValidator.validationResult)(req);
+              if (!errors.isEmpty()) {
+                _context22.next = 12;
+                break;
+              }
+              if (!(req.user.role === 'administrator')) {
+                _context22.next = 10;
+                break;
+              }
+              imageUrl = req.body.article_image_preset;
+              if (req.body.article_image !== '') {
+                imageUrl = req.body.article_image;
+              }
+              newArticle = new _article["default"]({
+                title: req.body.article_title,
+                description: req.body.article_description,
+                message: req.body.article_content,
+                status: 'pending',
+                category: req.body.article_category,
+                author: req.user._id,
+                timestamp: new Date(),
+                likes: 0,
+                imageUrl: imageUrl
+              });
+              _context22.next = 8;
+              return newArticle.save();
+            case 8:
+              responseObject = {
+                responseStatus: 'articleCreated'
+              };
+              res.json(responseObject);
+            case 10:
+              _context22.next = 14;
+              break;
+            case 12:
+              // send response with errors
+              _responseObject24 = {
+                responseStatus: 'categoryError',
+                errors: errors.array()
+              };
+              return _context22.abrupt("return", res.json(_responseObject24));
+            case 14:
+            case "end":
+              return _context22.stop();
+          }
+        }, _callee22);
+      }));
+      return function (_x60, _x61, _x62) {
+        return _ref22.apply(this, arguments);
+      };
+    }())],
+    housekeeping_get_article: (0, _expressAsyncHandler["default"])( /*#__PURE__*/function () {
+      var _ref23 = _asyncToGenerator( /*#__PURE__*/_regeneratorRuntime().mark(function _callee23(req, res, next) {
+        var responseObject, _responseObject25, articleResult, _responseObject26, _responseObject27;
+        return _regeneratorRuntime().wrap(function _callee23$(_context23) {
+          while (1) switch (_context23.prev = _context23.next) {
+            case 0:
+              if (!(req.params.id.length < 24)) {
+                _context23.next = 3;
+                break;
+              }
+              // No results
+              responseObject = {
+                responseStatus: 'invalidArticleId'
+              };
+              return _context23.abrupt("return", res.json(responseObject));
+            case 3:
+              if (!(req.user.role !== 'administrator')) {
+                _context23.next = 6;
+                break;
+              }
+              _responseObject25 = {
+                responseStatus: 'notEnoughPermissions'
+              };
+              return _context23.abrupt("return", res.json(_responseObject25));
+            case 6:
+              _context23.next = 8;
+              return _article["default"].findOne({
+                _id: req.params.id
+              }).exec();
+            case 8:
+              articleResult = _context23.sent;
+              if (articleResult) {
+                _context23.next = 14;
+                break;
+              }
+              _responseObject26 = {
+                responseStatus: 'unknownArticle'
+              };
+              return _context23.abrupt("return", res.json(_responseObject26));
+            case 14:
+              _responseObject27 = {
+                responseStatus: 'articleFound',
+                article: articleResult
+              };
+              return _context23.abrupt("return", res.json(_responseObject27));
+            case 16:
+            case "end":
+              return _context23.stop();
+          }
+        }, _callee23);
+      }));
+      return function (_x63, _x64, _x65) {
+        return _ref23.apply(this, arguments);
+      };
     }())
   };
 }

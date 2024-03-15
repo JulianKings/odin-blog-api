@@ -495,6 +495,117 @@ export default function(passport) {
                 }
                 res.json(responseObject);
             }
-        })
+        }),
+        housekeeping_get_articles: expressAsyncHandler(async (req, res, next) => {
+            const articles = await articleModel.find({}).populate('author').sort({timestamp: -1}).exec();
+        
+            const responseObject = {
+                responseStatus: 'validRequest',
+                articles: articles
+            }
+            return res.json(responseObject);
+        }),
+        housekeeping_get_articles_categories: expressAsyncHandler(async (req, res, next) => {
+            const categories = await categoryModel.find({}).exec();
+        
+            const responseObject = {
+                responseStatus: 'validRequest',
+                categories: categories
+            }
+            return res.json(responseObject);
+        }),
+        housekeeping_post_add_article: [
+            // Validate and sanitize fields.
+            body("article_title", "Article title must not be empty.")
+                .trim()
+                .isLength({ min: 1 })
+                .escape(),
+            body("article_description", "Article description must not be empty.")
+                .trim()
+                .isLength({ min: 1 })
+                .escape(),
+            body("article_content", "Article content must not be empty.")
+                .trim()
+                .isLength({ min: 1 })
+                .escape(),
+            body("article_category", "Article category must not be empty.")
+                .trim()
+                .isLength({ min: 1 })
+                .escape(),
+            expressAsyncHandler(async (req, res, next) => {
+                const errors = validationResult(req);
+                if(errors.isEmpty())
+                {
+                    if(req.user.role === 'administrator')
+                    {
+                        let imageUrl = req.body.article_image_preset;
+                        if(req.body.article_image !== '')
+                        {
+                            imageUrl = req.body.article_image;
+                        }
+                        
+                        const newArticle = new articleModel({
+                            title: req.body.article_title,
+                            description: req.body.article_description,
+                            message: req.body.article_content,
+                            status: 'pending',
+                            category: req.body.article_category,
+                            author: req.user._id,
+                            timestamp: (new Date()),
+                            likes: 0,
+                            imageUrl: imageUrl
+                        });
+
+                        await newArticle.save();
+
+                        const responseObject = {
+                            responseStatus: 'articleCreated'
+                        }
+                        res.json(responseObject);
+                    }                    
+                } else {
+                    // send response with errors
+                    const responseObject = {
+                        responseStatus: 'categoryError',
+                        errors: errors.array()
+                    }
+                    return res.json(responseObject);
+                }
+            }),
+
+        ],
+        housekeeping_get_article: expressAsyncHandler(async (req, res, next) => {
+            if(req.params.id.length < 24)
+            {
+                // No results
+                const responseObject = {
+                    responseStatus: 'invalidArticleId',
+                }
+                return res.json(responseObject);
+            }
+
+            if(req.user.role !== 'administrator')
+            {
+                const responseObject = {
+                    responseStatus: 'notEnoughPermissions',
+                }
+                return res.json(responseObject);
+            }
+
+            const articleResult = await articleModel.findOne({ _id: req.params.id}).exec();
+            if(!articleResult)
+            {
+                const responseObject = {
+                    responseStatus: 'unknownArticle',
+                }
+                return res.json(responseObject);
+            } else {
+                const responseObject = {
+                    responseStatus: 'articleFound',
+                    article: articleResult
+                }
+                return res.json(responseObject);
+            }
+        }),
     }
 }
