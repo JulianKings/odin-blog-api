@@ -31,5 +31,7 @@ function _default(passport) {
   router.get('/admin/articles/categories', controller.housekeeping_get_articles_categories);
   router.post('/admin/articles/add', controller.housekeeping_post_add_article);
   router.get('/admin/article/find/:id', controller.housekeeping_get_article);
+  router.put('/admin/articles/edit', controller.housekeeping_put_edit_article);
+  router.put('/admin/articles/update_status', controller.housekeeping_put_update_article_status);
   return router;
 }

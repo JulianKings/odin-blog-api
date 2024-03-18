@@ -876,21 +876,23 @@ function _default(passport) {
           while (1) switch (_context19.prev = _context19.next) {
             case 0:
               if (!(req.user.role === 'administrator')) {
-                _context19.next = 6;
+                _context19.next = 8;
                 break;
               }
-              updatedSetting = new _category["default"]({
+              console.log(req.body.settings_id);
+              console.log(req.body.featured_article);
+              updatedSetting = new _settings["default"]({
                 featured_article: req.body.featured_article,
                 _id: req.body.settings_id
               });
-              _context19.next = 4;
+              _context19.next = 6;
               return _settings["default"].findByIdAndUpdate(req.body.settings_id, updatedSetting, {});
-            case 4:
+            case 6:
               responseObject = {
                 responseStatus: 'settingsUpdated'
               };
               res.json(responseObject);
-            case 6:
+            case 8:
             case "end":
               return _context19.stop();
           }
@@ -1072,6 +1074,131 @@ function _default(passport) {
       }));
       return function (_x63, _x64, _x65) {
         return _ref23.apply(this, arguments);
+      };
+    }()),
+    housekeeping_put_edit_article: [
+    // Validate and sanitize fields.
+    (0, _expressValidator.body)("article_title", "Article title must not be empty.").trim().isLength({
+      min: 1
+    }).escape(), (0, _expressValidator.body)("article_description", "Article description must not be empty.").trim().isLength({
+      min: 1
+    }).escape(), (0, _expressValidator.body)("article_content", "Article content must not be empty.").trim().isLength({
+      min: 1
+    }).escape(), (0, _expressValidator.body)("article_category", "Article category must not be empty.").trim().isLength({
+      min: 1
+    }).escape(), (0, _expressAsyncHandler["default"])( /*#__PURE__*/function () {
+      var _ref24 = _asyncToGenerator( /*#__PURE__*/_regeneratorRuntime().mark(function _callee24(req, res, next) {
+        var errors, articleResult, imageUrl, updatedArticle, responseObject, _responseObject28;
+        return _regeneratorRuntime().wrap(function _callee24$(_context24) {
+          while (1) switch (_context24.prev = _context24.next) {
+            case 0:
+              errors = (0, _expressValidator.validationResult)(req);
+              if (!(errors.isEmpty() && req.body.article_id.length > 20)) {
+                _context24.next = 15;
+                break;
+              }
+              _context24.next = 4;
+              return _article["default"].findOne({
+                _id: req.body.article_id
+              }).exec();
+            case 4:
+              articleResult = _context24.sent;
+              if (!(req.user.role === 'administrator' && articleResult)) {
+                _context24.next = 13;
+                break;
+              }
+              imageUrl = req.body.article_image_preset;
+              if (req.body.article_image !== '') {
+                imageUrl = req.body.article_image;
+              }
+              updatedArticle = new _article["default"]({
+                title: req.body.article_title,
+                description: req.body.article_description,
+                message: req.body.article_content,
+                status: articleResult.status,
+                category: req.body.article_category,
+                author: req.user._id,
+                timestamp: new Date(),
+                likes: articleResult.likes,
+                imageUrl: imageUrl,
+                _id: req.body.article_id
+              });
+              _context24.next = 11;
+              return _article["default"].findByIdAndUpdate(req.body.article_id, updatedArticle, {});
+            case 11:
+              responseObject = {
+                responseStatus: 'articleUpdated'
+              };
+              res.json(responseObject);
+            case 13:
+              _context24.next = 17;
+              break;
+            case 15:
+              // send response with errors
+              _responseObject28 = {
+                responseStatus: 'categoryError',
+                errors: errors.array()
+              };
+              return _context24.abrupt("return", res.json(_responseObject28));
+            case 17:
+            case "end":
+              return _context24.stop();
+          }
+        }, _callee24);
+      }));
+      return function (_x66, _x67, _x68) {
+        return _ref24.apply(this, arguments);
+      };
+    }())],
+    housekeeping_put_update_article_status: (0, _expressAsyncHandler["default"])( /*#__PURE__*/function () {
+      var _ref25 = _asyncToGenerator( /*#__PURE__*/_regeneratorRuntime().mark(function _callee25(req, res, next) {
+        var articleResult, reverseStatus, updatedArticle, responseObject;
+        return _regeneratorRuntime().wrap(function _callee25$(_context25) {
+          while (1) switch (_context25.prev = _context25.next) {
+            case 0:
+              if (!(req.body.article_id.length > 20)) {
+                _context25.next = 11;
+                break;
+              }
+              _context25.next = 3;
+              return _article["default"].findOne({
+                _id: req.body.article_id
+              }).populate("author").exec();
+            case 3:
+              articleResult = _context25.sent;
+              if (!(req.user.role === 'administrator' && articleResult)) {
+                _context25.next = 11;
+                break;
+              }
+              reverseStatus = req.body.article_status === 'active' ? 'pending' : 'active';
+              updatedArticle = new _article["default"]({
+                title: articleResult.title,
+                description: articleResult.description,
+                message: articleResult.message,
+                status: reverseStatus,
+                category: articleResult.category,
+                author: articleResult.author,
+                timestamp: articleResult.timestamp,
+                likes: articleResult.likes,
+                imageUrl: articleResult.imageUrl,
+                _id: req.body.article_id
+              });
+              _context25.next = 9;
+              return _article["default"].findByIdAndUpdate(req.body.article_id, updatedArticle, {});
+            case 9:
+              responseObject = {
+                responseStatus: 'articleStatusUpdated',
+                updatedResult: updatedArticle
+              };
+              res.json(responseObject);
+            case 11:
+            case "end":
+              return _context25.stop();
+          }
+        }, _callee25);
+      }));
+      return function (_x69, _x70, _x71) {
+        return _ref25.apply(this, arguments);
       };
     }())
   };

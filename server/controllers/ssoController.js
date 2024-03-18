@@ -484,7 +484,10 @@ export default function(passport) {
         housekeeping_put_edit_settings: expressAsyncHandler(async (req, res, next) => {
             if(req.user.role === 'administrator')
             {
-                const updatedSetting = new categoryModel({
+                console.log(req.body.settings_id);
+                console.log(req.body.featured_article);
+
+                const updatedSetting = new settingsModel({
                     featured_article: req.body.featured_article,
                     _id: req.body.settings_id
                 })
@@ -605,6 +608,99 @@ export default function(passport) {
                     article: articleResult
                 }
                 return res.json(responseObject);
+            }
+        }),
+        housekeeping_put_edit_article: [
+            // Validate and sanitize fields.
+            body("article_title", "Article title must not be empty.")
+                .trim()
+                .isLength({ min: 1 })
+                .escape(),
+            body("article_description", "Article description must not be empty.")
+                .trim()
+                .isLength({ min: 1 })
+                .escape(),
+            body("article_content", "Article content must not be empty.")
+                .trim()
+                .isLength({ min: 1 })
+                .escape(),
+            body("article_category", "Article category must not be empty.")
+                .trim()
+                .isLength({ min: 1 })
+                .escape(),
+            expressAsyncHandler(async (req, res, next) => {
+                const errors = validationResult(req);
+                if(errors.isEmpty() && req.body.article_id.length > 20)
+                {
+                    const articleResult = await articleModel.findOne({ _id: req.body.article_id}).exec();
+                    if(req.user.role === 'administrator' && articleResult)
+                    {
+                        let imageUrl = req.body.article_image_preset;
+                        if(req.body.article_image !== '')
+                        {
+                            imageUrl = req.body.article_image;
+                        }
+                        
+                        const updatedArticle = new articleModel({
+                            title: req.body.article_title,
+                            description: req.body.article_description,
+                            message: req.body.article_content,
+                            status: articleResult.status,
+                            category: req.body.article_category,
+                            author: req.user._id,
+                            timestamp: (new Date()),
+                            likes: articleResult.likes,
+                            imageUrl: imageUrl,
+                            _id: req.body.article_id
+                        });
+
+                        await articleModel.findByIdAndUpdate(req.body.article_id, updatedArticle, {});
+
+                        const responseObject = {
+                            responseStatus: 'articleUpdated'
+                        }
+                        res.json(responseObject);
+                    }                    
+                } else {
+                    // send response with errors
+                    const responseObject = {
+                        responseStatus: 'categoryError',
+                        errors: errors.array()
+                    }
+                    return res.json(responseObject);
+                }
+            }),
+
+        ],
+        housekeeping_put_update_article_status: expressAsyncHandler(async (req, res, next) => {
+            if(req.body.article_id.length > 20)
+            {
+                const articleResult = await articleModel.findOne({ _id: req.body.article_id}).populate("author").exec();
+                if(req.user.role === 'administrator' && articleResult)
+                {
+                    const reverseStatus = (req.body.article_status === 'active') ? 'pending' : 'active';
+                                        
+                    const updatedArticle = new articleModel({
+                        title: articleResult.title,
+                        description: articleResult.description,
+                        message: articleResult.message,
+                        status: reverseStatus,
+                        category: articleResult.category,
+                        author: articleResult.author,
+                        timestamp: articleResult.timestamp,
+                        likes: articleResult.likes,
+                        imageUrl: articleResult.imageUrl,
+                        _id: req.body.article_id
+                    });
+
+                    await articleModel.findByIdAndUpdate(req.body.article_id, updatedArticle, {});
+
+                    const responseObject = {
+                        responseStatus: 'articleStatusUpdated',
+                        updatedResult: updatedArticle
+                    }
+                    res.json(responseObject);
+                }                    
             }
         }),
     }
