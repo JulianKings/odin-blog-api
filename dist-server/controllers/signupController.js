@@ -113,7 +113,9 @@ var post_signup = exports.post_signup = [
             email: req.body.email,
             first_name: req.body.firstName,
             last_name: req.body.lastName,
-            membership_role: 'user'
+            membership_role: 'user',
+            timestamp: new Date(),
+            is_banned: false
           });
           if (!errors.isEmpty()) {
             // send response with errors

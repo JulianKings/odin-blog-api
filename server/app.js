@@ -78,6 +78,11 @@ passport.use(
           return done(null, false, { path: pwdField, msg: 'Wrong Password' });
         }
 
+        if(user.is_banned)
+        {          
+          return done(null, false, { path: nameField, msg: 'You have been banned from this site.' });
+        }
+
         return done(null, user, { message: 'Logged in Successfully' });
       } catch (error) {
         return done(error);

@@ -33,5 +33,11 @@ function _default(passport) {
   router.get('/admin/article/find/:id', controller.housekeeping_get_article);
   router.put('/admin/articles/edit', controller.housekeeping_put_edit_article);
   router.put('/admin/articles/update_status', controller.housekeeping_put_update_article_status);
+  router["delete"]('/admin/article/force_delete', controller.housekeeping_force_delete_article);
+  router.get('/admin/users', controller.housekeeping_get_users);
+  router.put('/admin/users/update_ban', controller.housekeeping_put_update_user_ban);
+  router.put('/admin/users/update_role', controller.housekeeping_put_update_user_role);
+  router["delete"]('/admin/users/force_delete', controller.housekeeping_force_delete_user);
+  router["delete"]('/admin/comments/force_delete', controller.housekeeping_force_delete_comment);
   return router;
 }

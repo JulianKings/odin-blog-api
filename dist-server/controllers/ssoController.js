@@ -462,7 +462,7 @@ function _default(passport) {
                 _context11.next = 10;
                 break;
               }
-              if (!(req.user.role === 'administrator')) {
+              if (!(req.user.role === 'administrator' || req.user.role === 'author')) {
                 _context11.next = 8;
                 break;
               }
@@ -512,7 +512,7 @@ function _default(passport) {
               };
               return _context12.abrupt("return", res.json(responseObject));
             case 3:
-              if (!(req.user.role !== 'administrator')) {
+              if (!(req.user.role !== 'administrator' && req.user.role !== 'author')) {
                 _context12.next = 6;
                 break;
               }
@@ -569,7 +569,7 @@ function _default(passport) {
               };
               return _context13.abrupt("return", res.json(responseObject));
             case 3:
-              if (!(req.user.role !== 'administrator')) {
+              if (!(req.user.role !== 'administrator' && req.user.role !== 'author')) {
                 _context13.next = 6;
                 break;
               }
@@ -649,7 +649,7 @@ function _default(passport) {
                 _context15.next = 10;
                 break;
               }
-              if (!(req.user.role === 'administrator')) {
+              if (!(req.user.role === 'administrator' || req.user.role === 'author')) {
                 _context15.next = 8;
                 break;
               }
@@ -700,7 +700,7 @@ function _default(passport) {
               };
               return _context16.abrupt("return", res.json(responseObject));
             case 3:
-              if (!(req.user.role !== 'administrator')) {
+              if (!(req.user.role !== 'administrator' && req.user.role !== 'author')) {
                 _context16.next = 6;
                 break;
               }
@@ -750,7 +750,7 @@ function _default(passport) {
     }()),
     housekeeping_force_delete_category: (0, _expressAsyncHandler["default"])( /*#__PURE__*/function () {
       var _ref17 = _asyncToGenerator( /*#__PURE__*/_regeneratorRuntime().mark(function _callee17(req, res, next) {
-        var responseObject, _responseObject20, articlesByCategory, featuredArticleArray, articleArray, featuredArticle, _responseObject21, _responseObject22, _responseObject23;
+        var responseObject, _responseObject20, authorError, articlesByCategory, featuredArticleArray, articleArray, featuredArticle, _responseObject21, _responseObject22, _responseObject23, _responseObject24;
         return _regeneratorRuntime().wrap(function _callee17$(_context17) {
           while (1) switch (_context17.prev = _context17.next) {
             case 0:
@@ -764,7 +764,7 @@ function _default(passport) {
               };
               return _context17.abrupt("return", res.json(responseObject));
             case 3:
-              if (!(req.user.role !== 'administrator')) {
+              if (!(req.user.role !== 'administrator' && req.user.role !== 'author')) {
                 _context17.next = 6;
                 break;
               }
@@ -774,63 +774,83 @@ function _default(passport) {
               };
               return _context17.abrupt("return", res.json(_responseObject20));
             case 6:
-              _context17.next = 8;
+              authorError = false;
+              _context17.next = 9;
               return _article["default"].find({
                 category: req.body.category_id
               }).exec();
-            case 8:
+            case 9:
               articlesByCategory = _context17.sent;
               if (!(articlesByCategory.length > 0)) {
-                _context17.next = 27;
+                _context17.next = 35;
                 break;
               }
               featuredArticleArray = [];
               articleArray = [];
               articlesByCategory.forEach(function (article) {
+                if (article.author.toString() !== req.user._id && req.user.role === 'author') {
+                  authorError = true;
+                }
                 articleArray.push(article._id);
                 featuredArticleArray.push({
                   featured_article: article._id
                 });
               });
-              featuredArticle = _settings["default"].findOne({
+              _context17.next = 16;
+              return _settings["default"].findOne({
                 $or: featuredArticleArray
               }).exec();
+            case 16:
+              featuredArticle = _context17.sent;
               if (featuredArticle) {
-                _context17.next = 23;
+                _context17.next = 31;
                 break;
               }
-              _context17.next = 17;
+              if (authorError) {
+                _context17.next = 27;
+                break;
+              }
+              _context17.next = 21;
               return _article["default"].deleteMany({
                 _id: {
                   $in: articleArray
                 }
               });
-            case 17:
-              _context17.next = 19;
+            case 21:
+              _context17.next = 23;
               return _category["default"].findByIdAndDelete(req.body.category_id);
-            case 19:
+            case 23:
               _responseObject21 = {
                 responseStatus: 'categoryDeleted'
               };
               return _context17.abrupt("return", res.json(_responseObject21));
-            case 23:
+            case 27:
               _responseObject22 = {
+                responseStatus: 'notEnoughPermissions',
+                error: "You don't have enough permissions to delete this category."
+              };
+              return _context17.abrupt("return", res.json(_responseObject22));
+            case 29:
+              _context17.next = 33;
+              break;
+            case 31:
+              _responseObject23 = {
                 responseStatus: 'categoryHasFeaturedArticle',
                 error: "This category has a featured article, therefore it can't be deleted."
               };
-              return _context17.abrupt("return", res.json(_responseObject22));
-            case 25:
-              _context17.next = 31;
+              return _context17.abrupt("return", res.json(_responseObject23));
+            case 33:
+              _context17.next = 39;
               break;
-            case 27:
-              _context17.next = 29;
+            case 35:
+              _context17.next = 37;
               return _category["default"].findByIdAndDelete(req.body.category_id);
-            case 29:
-              _responseObject23 = {
+            case 37:
+              _responseObject24 = {
                 responseStatus: 'categoryDeleted'
               };
-              return _context17.abrupt("return", res.json(_responseObject23));
-            case 31:
+              return _context17.abrupt("return", res.json(_responseObject24));
+            case 39:
             case "end":
               return _context17.stop();
           }
@@ -966,7 +986,7 @@ function _default(passport) {
       min: 1
     }).escape(), (0, _expressAsyncHandler["default"])( /*#__PURE__*/function () {
       var _ref22 = _asyncToGenerator( /*#__PURE__*/_regeneratorRuntime().mark(function _callee22(req, res, next) {
-        var errors, imageUrl, newArticle, responseObject, _responseObject24;
+        var errors, imageUrl, newArticle, responseObject, _responseObject25;
         return _regeneratorRuntime().wrap(function _callee22$(_context22) {
           while (1) switch (_context22.prev = _context22.next) {
             case 0:
@@ -975,7 +995,7 @@ function _default(passport) {
                 _context22.next = 12;
                 break;
               }
-              if (!(req.user.role === 'administrator')) {
+              if (!(req.user.role === 'administrator' || req.user.role === 'author')) {
                 _context22.next = 10;
                 break;
               }
@@ -1006,11 +1026,11 @@ function _default(passport) {
               break;
             case 12:
               // send response with errors
-              _responseObject24 = {
-                responseStatus: 'categoryError',
+              _responseObject25 = {
+                responseStatus: 'articleError',
                 errors: errors.array()
               };
-              return _context22.abrupt("return", res.json(_responseObject24));
+              return _context22.abrupt("return", res.json(_responseObject25));
             case 14:
             case "end":
               return _context22.stop();
@@ -1023,7 +1043,7 @@ function _default(passport) {
     }())],
     housekeeping_get_article: (0, _expressAsyncHandler["default"])( /*#__PURE__*/function () {
       var _ref23 = _asyncToGenerator( /*#__PURE__*/_regeneratorRuntime().mark(function _callee23(req, res, next) {
-        var responseObject, _responseObject25, articleResult, _responseObject26, _responseObject27;
+        var responseObject, _responseObject26, articleResult, _responseObject27, _responseObject28;
         return _regeneratorRuntime().wrap(function _callee23$(_context23) {
           while (1) switch (_context23.prev = _context23.next) {
             case 0:
@@ -1037,14 +1057,14 @@ function _default(passport) {
               };
               return _context23.abrupt("return", res.json(responseObject));
             case 3:
-              if (!(req.user.role !== 'administrator')) {
+              if (!(req.user.role !== 'administrator' && req.user.role !== 'author')) {
                 _context23.next = 6;
                 break;
               }
-              _responseObject25 = {
+              _responseObject26 = {
                 responseStatus: 'notEnoughPermissions'
               };
-              return _context23.abrupt("return", res.json(_responseObject25));
+              return _context23.abrupt("return", res.json(_responseObject26));
             case 6:
               _context23.next = 8;
               return _article["default"].findOne({
@@ -1056,16 +1076,16 @@ function _default(passport) {
                 _context23.next = 14;
                 break;
               }
-              _responseObject26 = {
+              _responseObject27 = {
                 responseStatus: 'unknownArticle'
               };
-              return _context23.abrupt("return", res.json(_responseObject26));
+              return _context23.abrupt("return", res.json(_responseObject27));
             case 14:
-              _responseObject27 = {
+              _responseObject28 = {
                 responseStatus: 'articleFound',
                 article: articleResult
               };
-              return _context23.abrupt("return", res.json(_responseObject27));
+              return _context23.abrupt("return", res.json(_responseObject28));
             case 16:
             case "end":
               return _context23.stop();
@@ -1088,7 +1108,7 @@ function _default(passport) {
       min: 1
     }).escape(), (0, _expressAsyncHandler["default"])( /*#__PURE__*/function () {
       var _ref24 = _asyncToGenerator( /*#__PURE__*/_regeneratorRuntime().mark(function _callee24(req, res, next) {
-        var errors, articleResult, imageUrl, updatedArticle, responseObject, _responseObject28;
+        var errors, articleResult, imageUrl, updatedArticle, responseObject, _responseObject29;
         return _regeneratorRuntime().wrap(function _callee24$(_context24) {
           while (1) switch (_context24.prev = _context24.next) {
             case 0:
@@ -1103,7 +1123,7 @@ function _default(passport) {
               }).exec();
             case 4:
               articleResult = _context24.sent;
-              if (!(req.user.role === 'administrator' && articleResult)) {
+              if (!(req.user.role === 'administrator' && articleResult || req.user.role === 'author' && articleResult && articleResult.author.toString() === req.user._id)) {
                 _context24.next = 13;
                 break;
               }
@@ -1135,11 +1155,11 @@ function _default(passport) {
               break;
             case 15:
               // send response with errors
-              _responseObject28 = {
-                responseStatus: 'categoryError',
+              _responseObject29 = {
+                responseStatus: 'articleError',
                 errors: errors.array()
               };
-              return _context24.abrupt("return", res.json(_responseObject28));
+              return _context24.abrupt("return", res.json(_responseObject29));
             case 17:
             case "end":
               return _context24.stop();
@@ -1199,6 +1219,385 @@ function _default(passport) {
       }));
       return function (_x69, _x70, _x71) {
         return _ref25.apply(this, arguments);
+      };
+    }()),
+    housekeeping_force_delete_article: (0, _expressAsyncHandler["default"])( /*#__PURE__*/function () {
+      var _ref26 = _asyncToGenerator( /*#__PURE__*/_regeneratorRuntime().mark(function _callee26(req, res, next) {
+        var responseObject, _responseObject30, articleData, _responseObject31, featuredArticle, commentArray, commentList, _responseObject32, _responseObject33;
+        return _regeneratorRuntime().wrap(function _callee26$(_context26) {
+          while (1) switch (_context26.prev = _context26.next) {
+            case 0:
+              if (!(req.body.article_id.length < 24)) {
+                _context26.next = 3;
+                break;
+              }
+              // No results
+              responseObject = {
+                responseStatus: 'invalidArticleId'
+              };
+              return _context26.abrupt("return", res.json(responseObject));
+            case 3:
+              if (!(req.user.role !== 'administrator' && req.user.role !== 'author')) {
+                _context26.next = 6;
+                break;
+              }
+              _responseObject30 = {
+                responseStatus: 'notEnoughPermissions',
+                error: "You don't have enough permissions for this action."
+              };
+              return _context26.abrupt("return", res.json(_responseObject30));
+            case 6:
+              _context26.next = 8;
+              return _article["default"].findOne({
+                _id: req.body.article_id
+              }).exec();
+            case 8:
+              articleData = _context26.sent;
+              if (!articleData) {
+                _context26.next = 35;
+                break;
+              }
+              if (!(req.user.role === 'author' && articleData.author.toString() !== req.user._id)) {
+                _context26.next = 15;
+                break;
+              }
+              _responseObject31 = {
+                responseStatus: 'notEnoughPermissions',
+                error: "This article is not yours, so you don't have enough permissions to delete it."
+              };
+              return _context26.abrupt("return", res.json(_responseObject31));
+            case 15:
+              _context26.next = 17;
+              return _settings["default"].findOne({
+                featured_article: req.body.article_id
+              }).exec();
+            case 17:
+              featuredArticle = _context26.sent;
+              if (featuredArticle) {
+                _context26.next = 33;
+                break;
+              }
+              commentArray = [];
+              _context26.next = 22;
+              return _comment["default"].find({
+                article: req.body.article_id
+              }).exec();
+            case 22:
+              commentList = _context26.sent;
+              if (!(commentList && commentList.length > 0)) {
+                _context26.next = 27;
+                break;
+              }
+              commentList.forEach(function (comment) {
+                commentArray.push(comment._id);
+              });
+              _context26.next = 27;
+              return _comment["default"].deleteMany({
+                _id: {
+                  $in: commentArray
+                }
+              });
+            case 27:
+              _context26.next = 29;
+              return _article["default"].findByIdAndDelete(req.body.article_id);
+            case 29:
+              _responseObject32 = {
+                responseStatus: 'articleDeleted'
+              };
+              return _context26.abrupt("return", res.json(_responseObject32));
+            case 33:
+              _responseObject33 = {
+                responseStatus: 'articleIsFeatured',
+                error: "This article has been featured, therefore please change the featured article to other article before deleting this one."
+              };
+              return _context26.abrupt("return", res.json(_responseObject33));
+            case 35:
+            case "end":
+              return _context26.stop();
+          }
+        }, _callee26);
+      }));
+      return function (_x72, _x73, _x74) {
+        return _ref26.apply(this, arguments);
+      };
+    }()),
+    housekeeping_get_users: (0, _expressAsyncHandler["default"])( /*#__PURE__*/function () {
+      var _ref27 = _asyncToGenerator( /*#__PURE__*/_regeneratorRuntime().mark(function _callee27(req, res, next) {
+        var _responseObject34, users, responseObject;
+        return _regeneratorRuntime().wrap(function _callee27$(_context27) {
+          while (1) switch (_context27.prev = _context27.next) {
+            case 0:
+              if (!(req.user.role !== 'administrator')) {
+                _context27.next = 3;
+                break;
+              }
+              _responseObject34 = {
+                responseStatus: 'notEnoughPermissions'
+              };
+              return _context27.abrupt("return", res.json(_responseObject34));
+            case 3:
+              _context27.next = 5;
+              return _user["default"].find({}, {
+                password: 0
+              }).sort({
+                timestamp: -1
+              }).exec();
+            case 5:
+              users = _context27.sent;
+              responseObject = {
+                responseStatus: 'validRequest',
+                users: users
+              };
+              return _context27.abrupt("return", res.json(responseObject));
+            case 8:
+            case "end":
+              return _context27.stop();
+          }
+        }, _callee27);
+      }));
+      return function (_x75, _x76, _x77) {
+        return _ref27.apply(this, arguments);
+      };
+    }()),
+    housekeeping_put_update_user_ban: (0, _expressAsyncHandler["default"])( /*#__PURE__*/function () {
+      var _ref28 = _asyncToGenerator( /*#__PURE__*/_regeneratorRuntime().mark(function _callee28(req, res, next) {
+        var userResult, reverseBan, updatedUser, responseObject;
+        return _regeneratorRuntime().wrap(function _callee28$(_context28) {
+          while (1) switch (_context28.prev = _context28.next) {
+            case 0:
+              if (!(req.body.user_id.length > 20)) {
+                _context28.next = 12;
+                break;
+              }
+              _context28.next = 3;
+              return _user["default"].findOne({
+                _id: req.body.user_id
+              }).exec();
+            case 3:
+              userResult = _context28.sent;
+              if (!(req.user.role === 'administrator' && userResult)) {
+                _context28.next = 12;
+                break;
+              }
+              if (!(userResult.membership_role !== 'administrator')) {
+                _context28.next = 12;
+                break;
+              }
+              reverseBan = !req.body.user_is_banned;
+              updatedUser = new _user["default"]({
+                username: userResult.username,
+                password: userResult.password,
+                email: userResult.email,
+                first_name: userResult.first_name,
+                last_name: userResult.last_name,
+                membership_role: userResult.membership_role,
+                timestamp: userResult.timestamp,
+                is_banned: reverseBan,
+                _id: userResult._id
+              });
+              _context28.next = 10;
+              return _user["default"].findByIdAndUpdate(req.body.user_id, updatedUser, {});
+            case 10:
+              responseObject = {
+                responseStatus: 'userBanUpdated',
+                updatedResult: updatedUser
+              };
+              res.json(responseObject);
+            case 12:
+            case "end":
+              return _context28.stop();
+          }
+        }, _callee28);
+      }));
+      return function (_x78, _x79, _x80) {
+        return _ref28.apply(this, arguments);
+      };
+    }()),
+    housekeeping_put_update_user_role: (0, _expressAsyncHandler["default"])( /*#__PURE__*/function () {
+      var _ref29 = _asyncToGenerator( /*#__PURE__*/_regeneratorRuntime().mark(function _callee29(req, res, next) {
+        var userResult, newRole, updatedUser, responseObject;
+        return _regeneratorRuntime().wrap(function _callee29$(_context29) {
+          while (1) switch (_context29.prev = _context29.next) {
+            case 0:
+              if (!(req.body.user_id.length > 20)) {
+                _context29.next = 12;
+                break;
+              }
+              _context29.next = 3;
+              return _user["default"].findOne({
+                _id: req.body.user_id
+              }).exec();
+            case 3:
+              userResult = _context29.sent;
+              if (!(req.user.role === 'administrator' && userResult)) {
+                _context29.next = 12;
+                break;
+              }
+              if (!(userResult.membership_role !== 'administrator')) {
+                _context29.next = 12;
+                break;
+              }
+              newRole = req.body.user_role;
+              updatedUser = new _user["default"]({
+                username: userResult.username,
+                password: userResult.password,
+                email: userResult.email,
+                first_name: userResult.first_name,
+                last_name: userResult.last_name,
+                membership_role: newRole,
+                timestamp: userResult.timestamp,
+                is_banned: userResult.is_banned,
+                _id: userResult._id
+              });
+              _context29.next = 10;
+              return _user["default"].findByIdAndUpdate(req.body.user_id, updatedUser, {});
+            case 10:
+              responseObject = {
+                responseStatus: 'userRoleUpdated',
+                updatedResult: updatedUser
+              };
+              res.json(responseObject);
+            case 12:
+            case "end":
+              return _context29.stop();
+          }
+        }, _callee29);
+      }));
+      return function (_x81, _x82, _x83) {
+        return _ref29.apply(this, arguments);
+      };
+    }()),
+    housekeeping_force_delete_user: (0, _expressAsyncHandler["default"])( /*#__PURE__*/function () {
+      var _ref30 = _asyncToGenerator( /*#__PURE__*/_regeneratorRuntime().mark(function _callee30(req, res, next) {
+        var responseObject, _responseObject35, userData, articleData, _responseObject36, commentArray, commentList, _responseObject37;
+        return _regeneratorRuntime().wrap(function _callee30$(_context30) {
+          while (1) switch (_context30.prev = _context30.next) {
+            case 0:
+              if (!(req.body.user_id.length < 24)) {
+                _context30.next = 3;
+                break;
+              }
+              // No results
+              responseObject = {
+                responseStatus: 'invalidUserId'
+              };
+              return _context30.abrupt("return", res.json(responseObject));
+            case 3:
+              if (!(req.user.role !== 'administrator')) {
+                _context30.next = 6;
+                break;
+              }
+              _responseObject35 = {
+                responseStatus: 'notEnoughPermissions',
+                error: "You don't have enough permissions for this action."
+              };
+              return _context30.abrupt("return", res.json(_responseObject35));
+            case 6:
+              _context30.next = 8;
+              return _user["default"].findOne({
+                _id: req.body.user_id
+              }).exec();
+            case 8:
+              userData = _context30.sent;
+              _context30.next = 11;
+              return _article["default"].find({
+                author: req.body.user_id
+              }).exec();
+            case 11:
+              articleData = _context30.sent;
+              if (!(articleData && articleData.length > 0)) {
+                _context30.next = 17;
+                break;
+              }
+              _responseObject36 = {
+                responseStatus: 'userHasArticles',
+                error: "This user has articles, therefore please remove all the articles owned by this user before deleting this user."
+              };
+              return _context30.abrupt("return", res.json(_responseObject36));
+            case 17:
+              if (!userData) {
+                _context30.next = 30;
+                break;
+              }
+              commentArray = [];
+              _context30.next = 21;
+              return _comment["default"].find({
+                author: req.body.user_id
+              }).exec();
+            case 21:
+              commentList = _context30.sent;
+              if (!(commentList && commentList.length > 0)) {
+                _context30.next = 26;
+                break;
+              }
+              commentList.forEach(function (comment) {
+                commentArray.push(comment._id);
+              });
+              _context30.next = 26;
+              return _comment["default"].deleteMany({
+                _id: {
+                  $in: commentArray
+                }
+              });
+            case 26:
+              _context30.next = 28;
+              return _user["default"].findByIdAndDelete(req.body.user_id);
+            case 28:
+              _responseObject37 = {
+                responseStatus: 'userDeleted'
+              };
+              return _context30.abrupt("return", res.json(_responseObject37));
+            case 30:
+            case "end":
+              return _context30.stop();
+          }
+        }, _callee30);
+      }));
+      return function (_x84, _x85, _x86) {
+        return _ref30.apply(this, arguments);
+      };
+    }()),
+    housekeeping_force_delete_comment: (0, _expressAsyncHandler["default"])( /*#__PURE__*/function () {
+      var _ref31 = _asyncToGenerator( /*#__PURE__*/_regeneratorRuntime().mark(function _callee31(req, res, next) {
+        var _responseObject38, _responseObject39, responseObject;
+        return _regeneratorRuntime().wrap(function _callee31$(_context31) {
+          while (1) switch (_context31.prev = _context31.next) {
+            case 0:
+              if (!(req.body.comment_id.length < 24)) {
+                _context31.next = 3;
+                break;
+              }
+              // No results
+              _responseObject38 = {
+                responseStatus: 'invalidCommentId'
+              };
+              return _context31.abrupt("return", res.json(_responseObject38));
+            case 3:
+              if (!(req.user.role !== 'administrator')) {
+                _context31.next = 6;
+                break;
+              }
+              _responseObject39 = {
+                responseStatus: 'notEnoughPermissions',
+                error: "You don't have enough permissions for this action."
+              };
+              return _context31.abrupt("return", res.json(_responseObject39));
+            case 6:
+              _context31.next = 8;
+              return _comment["default"].findByIdAndDelete(req.body.comment_id);
+            case 8:
+              responseObject = {
+                responseStatus: 'commentDeleted'
+              };
+              return _context31.abrupt("return", res.json(responseObject));
+            case 10:
+            case "end":
+              return _context31.stop();
+          }
+        }, _callee31);
+      }));
+      return function (_x87, _x88, _x89) {
+        return _ref31.apply(this, arguments);
       };
     }())
   };

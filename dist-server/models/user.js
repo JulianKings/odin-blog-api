@@ -31,6 +31,14 @@ var userSchema = new Schema({
   membership_role: {
     type: String,
     required: true
+  },
+  timestamp: {
+    type: Date,
+    required: true
+  },
+  is_banned: {
+    type: Boolean,
+    required: true
   }
 });
 var userModel = _mongoose["default"].model("user", userSchema);

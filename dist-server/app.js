@@ -122,18 +122,27 @@ _passport["default"].use('login', new LocalStrategy({
             msg: 'Wrong Password'
           }));
         case 11:
+          if (!user.is_banned) {
+            _context.next = 13;
+            break;
+          }
+          return _context.abrupt("return", done(null, false, {
+            path: nameField,
+            msg: 'You have been banned from this site.'
+          }));
+        case 13:
           return _context.abrupt("return", done(null, user, {
             message: 'Logged in Successfully'
           }));
-        case 14:
-          _context.prev = 14;
+        case 16:
+          _context.prev = 16;
           _context.t0 = _context["catch"](0);
           return _context.abrupt("return", done(_context.t0));
-        case 17:
+        case 19:
         case "end":
           return _context.stop();
       }
-    }, _callee, null, [[0, 14]]);
+    }, _callee, null, [[0, 16]]);
   }));
   return function (_x, _x2, _x3) {
     return _ref.apply(this, arguments);

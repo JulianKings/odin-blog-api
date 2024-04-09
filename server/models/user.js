@@ -8,7 +8,9 @@ const userSchema = new Schema({
     email: { type: String, required: true},
     first_name: { type: String, required: true },
     last_name: { type: String, required: true },
-    membership_role: { type: String, required: true }
+    membership_role: { type: String, required: true },
+    timestamp: { type: Date, required: true},
+    is_banned: { type: Boolean, required: true}
   });
 
 const userModel = mongoose.model("user", userSchema);

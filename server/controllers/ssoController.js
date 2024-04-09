@@ -249,7 +249,7 @@ export default function(passport) {
                 const errors = validationResult(req);
                 if(errors.isEmpty())
                 {
-                    if(req.user.role === 'administrator')
+                    if(req.user.role === 'administrator' || req.user.role === 'author')
                     {
                         const newCategory = new categoryModel({
                             name: req.body.category
@@ -282,7 +282,7 @@ export default function(passport) {
                 return res.json(responseObject);
             }
 
-            if(req.user.role !== 'administrator')
+            if(req.user.role !== 'administrator' && req.user.role !== 'author')
             {
                 const responseObject = {
                     responseStatus: 'notEnoughPermissions',
@@ -317,7 +317,7 @@ export default function(passport) {
                 return res.json(responseObject);
             }
 
-            if(req.user.role !== 'administrator')
+            if(req.user.role !== 'administrator' && req.user.role !== 'author')
             {
                 const responseObject = {
                     responseStatus: 'notEnoughPermissions',
@@ -356,7 +356,7 @@ export default function(passport) {
                 const errors = validationResult(req);
                 if(errors.isEmpty())
                 {
-                    if(req.user.role === 'administrator')
+                    if(req.user.role === 'administrator' || req.user.role === 'author')
                     {
                         const updatedCategory = new categoryModel({
                             name: req.body.category,
@@ -390,7 +390,7 @@ export default function(passport) {
                 return res.json(responseObject);
             }
 
-            if(req.user.role !== 'administrator')
+            if(req.user.role !== 'administrator' && req.user.role !== 'author')
             {
                 const responseObject = {
                     responseStatus: 'notEnoughPermissions',
@@ -425,7 +425,7 @@ export default function(passport) {
                 return res.json(responseObject);
             }
 
-            if(req.user.role !== 'administrator')
+            if(req.user.role !== 'administrator' && req.user.role !== 'author')
             {
                 const responseObject = {
                     responseStatus: 'notEnoughPermissions',
@@ -434,25 +434,41 @@ export default function(passport) {
                 return res.json(responseObject);
             }
 
+            let authorError = false;
+
             const articlesByCategory = await articleModel.find({category: req.body.category_id}).exec();
             if(articlesByCategory.length > 0)
             {
                 let featuredArticleArray = [];
                 let articleArray = [];
                 articlesByCategory.forEach((article) => {
+                    if(article.author.toString() !== req.user._id && req.user.role === 'author')
+                    {
+                        authorError = true;
+                    }
+
                     articleArray.push(article._id);
                     featuredArticleArray.push({ featured_article: article._id });
                 })
 
-                let featuredArticle = settingsModel.findOne({ $or: featuredArticleArray}).exec();
+                let featuredArticle = await settingsModel.findOne({ $or: featuredArticleArray}).exec();
                 if(!featuredArticle)
                 {
-                    await articleModel.deleteMany({ _id: { $in: articleArray}});
-                    await categoryModel.findByIdAndDelete(req.body.category_id);
-                    const responseObject = {
-                        responseStatus: 'categoryDeleted',
+                    if(!authorError)
+                    {
+                        await articleModel.deleteMany({ _id: { $in: articleArray}});
+                        await categoryModel.findByIdAndDelete(req.body.category_id);
+                        const responseObject = {
+                            responseStatus: 'categoryDeleted',
+                        }
+                        return res.json(responseObject);
+                    } else {
+                        const responseObject = {
+                            responseStatus: 'notEnoughPermissions',
+                            error: "You don't have enough permissions to delete this category."
+                        }
+                        return res.json(responseObject);
                     }
-                    return res.json(responseObject);
                 } else {
                     const responseObject = {
                         responseStatus: 'categoryHasFeaturedArticle',
@@ -539,7 +555,7 @@ export default function(passport) {
                 const errors = validationResult(req);
                 if(errors.isEmpty())
                 {
-                    if(req.user.role === 'administrator')
+                    if(req.user.role === 'administrator' || req.user.role === 'author')
                     {
                         let imageUrl = req.body.article_image_preset;
                         if(req.body.article_image !== '')
@@ -569,7 +585,7 @@ export default function(passport) {
                 } else {
                     // send response with errors
                     const responseObject = {
-                        responseStatus: 'categoryError',
+                        responseStatus: 'articleError',
                         errors: errors.array()
                     }
                     return res.json(responseObject);
@@ -587,7 +603,7 @@ export default function(passport) {
                 return res.json(responseObject);
             }
 
-            if(req.user.role !== 'administrator')
+            if(req.user.role !== 'administrator' && req.user.role !== 'author')
             {
                 const responseObject = {
                     responseStatus: 'notEnoughPermissions',
@@ -633,7 +649,7 @@ export default function(passport) {
                 if(errors.isEmpty() && req.body.article_id.length > 20)
                 {
                     const articleResult = await articleModel.findOne({ _id: req.body.article_id}).exec();
-                    if(req.user.role === 'administrator' && articleResult)
+                    if(req.user.role === 'administrator' && articleResult || req.user.role === 'author' && articleResult && articleResult.author.toString() === req.user._id)
                     {
                         let imageUrl = req.body.article_image_preset;
                         if(req.body.article_image !== '')
@@ -664,7 +680,7 @@ export default function(passport) {
                 } else {
                     // send response with errors
                     const responseObject = {
-                        responseStatus: 'categoryError',
+                        responseStatus: 'articleError',
                         errors: errors.array()
                     }
                     return res.json(responseObject);
@@ -702,6 +718,220 @@ export default function(passport) {
                     res.json(responseObject);
                 }                    
             }
+        }),
+        housekeeping_force_delete_article: expressAsyncHandler(async (req, res, next) => {
+            if(req.body.article_id.length < 24)
+            {
+                // No results
+                const responseObject = {
+                    responseStatus: 'invalidArticleId',
+                }
+                return res.json(responseObject);
+            }
+
+            if(req.user.role !== 'administrator' && req.user.role !== 'author')
+            {
+                const responseObject = {
+                    responseStatus: 'notEnoughPermissions',
+                    error: "You don't have enough permissions for this action."
+                }
+                return res.json(responseObject);
+            }
+
+            const articleData = await articleModel.findOne({_id: req.body.article_id}).exec();
+            if(articleData)
+            {
+                if(req.user.role === 'author' && articleData.author.toString() !== req.user._id)
+                {
+                    const responseObject = {
+                        responseStatus: 'notEnoughPermissions',
+                        error: "This article is not yours, so you don't have enough permissions to delete it."
+                    }
+                    return res.json(responseObject);
+                } else {
+                    let featuredArticle = await settingsModel.findOne({ featured_article: req.body.article_id }).exec();
+                    if(!featuredArticle)
+                    {
+                        let commentArray = [];
+                        let commentList = await commentModel.find({ article: req.body.article_id }).exec();
+                        if(commentList && commentList.length > 0)
+                        {
+                            commentList.forEach((comment) => {
+                                commentArray.push(comment._id);
+                            })
+                            await commentModel.deleteMany({ _id: { $in: commentArray}});
+                        }
+                        await articleModel.findByIdAndDelete(req.body.article_id);
+                        const responseObject = {
+                            responseStatus: 'articleDeleted',
+                        }
+                        return res.json(responseObject);
+                    } else {
+                        const responseObject = {
+                            responseStatus: 'articleIsFeatured',
+                            error: "This article has been featured, therefore please change the featured article to other article before deleting this one."
+                        }
+                        return res.json(responseObject);
+                    }
+                }
+            }
+        }),
+
+        housekeeping_get_users: expressAsyncHandler(async (req, res, next) => {
+            if(req.user.role !== 'administrator')
+            {
+                const responseObject = {
+                    responseStatus: 'notEnoughPermissions',
+                }
+                return res.json(responseObject);
+            }
+            
+            const users = await userModel.find({}, {password: 0}).sort({ timestamp: -1 }).exec();
+        
+            const responseObject = {
+                responseStatus: 'validRequest',
+                users: users
+            }
+            return res.json(responseObject);
+        }),
+        housekeeping_put_update_user_ban: expressAsyncHandler(async (req, res, next) => {
+            if(req.body.user_id.length > 20)
+            {
+                const userResult = await userModel.findOne({ _id: req.body.user_id}).exec();
+                if(req.user.role === 'administrator' && userResult)
+                {
+                    if(userResult.membership_role !== 'administrator')
+                    {
+                        const reverseBan = !(req.body.user_is_banned);
+                                            
+                        const updatedUser = new userModel({
+                            username: userResult.username,
+                            password: userResult.password,
+                            email: userResult.email,
+                            first_name: userResult.first_name,
+                            last_name: userResult.last_name,
+                            membership_role: userResult.membership_role,
+                            timestamp: userResult.timestamp,
+                            is_banned: reverseBan,
+                            _id: userResult._id
+                        })
+
+                        await userModel.findByIdAndUpdate(req.body.user_id, updatedUser, {});
+
+                        const responseObject = {
+                            responseStatus: 'userBanUpdated',
+                            updatedResult: updatedUser
+                        }
+                        res.json(responseObject);
+                    }
+                }                    
+            }
+        }),
+        housekeeping_put_update_user_role: expressAsyncHandler(async (req, res, next) => {
+            if(req.body.user_id.length > 20)
+            {
+                const userResult = await userModel.findOne({ _id: req.body.user_id}).exec();
+                if(req.user.role === 'administrator' && userResult)
+                {
+                    if(userResult.membership_role !== 'administrator')
+                    {
+                        const newRole = req.body.user_role;
+                                            
+                        const updatedUser = new userModel({
+                            username: userResult.username,
+                            password: userResult.password,
+                            email: userResult.email,
+                            first_name: userResult.first_name,
+                            last_name: userResult.last_name,
+                            membership_role: newRole,
+                            timestamp: userResult.timestamp,
+                            is_banned: userResult.is_banned,
+                            _id: userResult._id
+                        })
+
+                        await userModel.findByIdAndUpdate(req.body.user_id, updatedUser, {});
+
+                        const responseObject = {
+                            responseStatus: 'userRoleUpdated',
+                            updatedResult: updatedUser
+                        }
+                        res.json(responseObject);
+                    }
+                }                    
+            }
+        }),
+
+        housekeeping_force_delete_user: expressAsyncHandler(async (req, res, next) => {
+            if(req.body.user_id.length < 24)
+            {
+                // No results
+                const responseObject = {
+                    responseStatus: 'invalidUserId',
+                }
+                return res.json(responseObject);
+            }
+
+            if(req.user.role !== 'administrator')
+            {
+                const responseObject = {
+                    responseStatus: 'notEnoughPermissions',
+                    error: "You don't have enough permissions for this action."
+                }
+                return res.json(responseObject);
+            }
+
+            const userData = await userModel.findOne({_id: req.body.user_id}).exec();
+            const articleData = await articleModel.find({ author: req.body.user_id }).exec();
+            if(articleData && articleData.length > 0)
+            {
+                const responseObject = {
+                    responseStatus: 'userHasArticles',
+                    error: "This user has articles, therefore please remove all the articles owned by this user before deleting this user."
+                }
+                return res.json(responseObject);
+            } else if(userData)
+            {
+                    let commentArray = [];
+                    let commentList = await commentModel.find({ author: req.body.user_id }).exec();
+                    if(commentList && commentList.length > 0)
+                    {
+                        commentList.forEach((comment) => {
+                            commentArray.push(comment._id);
+                        })
+                        await commentModel.deleteMany({ _id: { $in: commentArray}});
+                    }
+                    await userModel.findByIdAndDelete(req.body.user_id);
+                    const responseObject = {
+                        responseStatus: 'userDeleted',
+                    }
+                    return res.json(responseObject);                    
+            }
+        }),
+
+        housekeeping_force_delete_comment: expressAsyncHandler(async (req, res, next) => {
+            if(req.body.comment_id.length < 24)
+            {
+                // No results
+                const responseObject = {
+                    responseStatus: 'invalidCommentId',
+                }
+                return res.json(responseObject);
+            }
+
+            if(req.user.role !== 'administrator')
+            {
+                const responseObject = {
+                    responseStatus: 'notEnoughPermissions',
+                    error: "You don't have enough permissions for this action."
+                }
+                return res.json(responseObject);
+            }
+               
+            await commentModel.findByIdAndDelete(req.body.comment_id);
+            const responseObject = {
+                responseStatus: 'commentDeleted',
+            }
+            return res.json(responseObject);
         }),
     }
 }

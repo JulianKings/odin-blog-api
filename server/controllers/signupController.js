@@ -76,6 +76,8 @@ const post_signup = [
             first_name: req.body.firstName,
             last_name: req.body.lastName,
             membership_role: 'user',
+            timestamp: (new Date()),
+            is_banned: false
         })
 
         if(!errors.isEmpty())
